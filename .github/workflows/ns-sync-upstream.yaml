@@ -1,0 +1,61 @@
+name: ns-sync-upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # daily at 3am
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: sync
+    runs-on: nscloud
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: git config
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email noreply+github-actions@namespacelabs.com
+
+      - name: fetch upstream
+        run: |
+          git remote add upstream https://github.com/getsentry/sentry.git
+          git fetch upstream master
+          git checkout -t origin/upstream
+          git rebase upstream/master
+
+      - name: rebase patches
+        run: |
+          # Branch patches contains updates that should cleanly rebase.
+          # For instance it contains this workflow.
+
+          git checkout -t origin/patches
+          git rebase upstream
+
+      - name: update master
+        run: |
+          # master is recreated from scratch every time:
+          #  * start from patches
+          #  * delete irrelevant workflows
+          #  * switch to nscloud
+          # we do not rebase here since conflicts with deleted files are likely.
+
+          git checkout master
+          git reset --hard patches
+
+          # Only frontend/backend workflows have non-trivial tests.
+          shopt -s extglob
+          rm -- .github/workflows/!(frontend|backend|ns-sync-upstream).y*ml
+
+          # Update them to run on nscloud.
+          sed -e 's/^\([[:space:]]*\)runs-on: .*/\1runs-on: nscloud/' -i .github/workflows/*.y*ml
+
+          git add .
+          git commit -m "Update workflows to run on nscloud."
+          git push --all -f origin
