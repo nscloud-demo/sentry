@@ -13,7 +13,7 @@ name: ns-sync-upstream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 3 * * *' # daily at 3am
+    - cron: '0 5 * * *' # daily at 5am
 
 jobs:
   sync:
