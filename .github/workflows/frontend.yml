@@ -20,7 +20,7 @@ env:
 jobs:
   files-changed:
     name: detect what files changed
-    runs-on: ubuntu-22.04
+    runs-on: nscloud
     timeout-minutes: 3
     # Map a step output to a job output
     outputs:
@@ -49,7 +49,7 @@ jobs:
     if: needs.files-changed.outputs.frontend_all == 'true'
     needs: files-changed
     name: typescript and lint
-    runs-on: ubuntu-22.04
+    runs-on: nscloud
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -136,7 +136,7 @@ jobs:
     name: Jest
     # If you change the runs-on image, you must also change the runner in jest-balance.yml
     # so that the balancer runs in the same environment as the tests.
-    runs-on: ubuntu-22.04
+    runs-on: nscloud
     timeout-minutes: 30
     strategy:
       # This helps not having to run multiple jobs because one fails, thus, reducing resource usage
@@ -208,7 +208,7 @@ jobs:
     name: Frontend
     # This is necessary since a failed/skipped dependent job would cause this job to be skipped
     if: always()
-    runs-on: ubuntu-22.04
+    runs-on: nscloud
     steps:
       # If any jobs we depend on fail, we will fail since this is a required check
       # NOTE: A timeout is considered a failure
